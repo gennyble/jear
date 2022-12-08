@@ -1,0 +1,11 @@
+[package]
+name = "jear"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bempline = "0.8.1"
+camino = "1.1.1"
+quark = { path="../quark" }
