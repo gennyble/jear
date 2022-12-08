@@ -73,12 +73,12 @@ pub fn inlines_html(inlines: &[Inline], refs: &HashMap<String, String>) -> Strin
 							eprintln!("Failed to resolve a reflink: {location}. Outputting as regular text");
 							format!("{location}")
 						}
-						Some(location) => {
+						Some(real_location) => {
 							let name = name
 								.as_deref()
 								.map(<_>::to_owned)
 								.unwrap_or_else(|| htmlspecialchars(location));
-							format!("<a href=\"{location}\">{name}</a>")
+							format!("<a href=\"{real_location}\">{name}</a>")
 						}
 					}
 				}
