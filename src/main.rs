@@ -25,7 +25,14 @@ fn main() {
 		Some(string_out) => Utf8PathBuf::from(string_out),
 	};
 
+	let files = vec!["about.html", "index.html"];
+
+	for file in files {
+		std::fs::copy(nyble_root.join(file), output.join(file)).expect("Failed to copy file");
+	}
+
 	copy_across(nyble_root.join("styles"), output.join("styles"));
+	copy_across(nyble_root.join("media"), output.join("media"));
 
 	Notebook::new(
 		nyble_root.join("notebook.html"),
