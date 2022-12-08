@@ -6,7 +6,6 @@ use std::{fs::File, io::Write};
 use bempline::{Document, Options};
 use camino::{Utf8Path, Utf8PathBuf};
 use notebook::Notebook;
-use quark::Parser;
 
 fn main() {
 	let nyble_root = match std::env::args().nth(1) {
@@ -25,15 +24,20 @@ fn main() {
 		Some(string_out) => Utf8PathBuf::from(string_out),
 	};
 
+	// Some bempline that we want to compile
 	let files = vec!["about.html", "index.html"];
-
 	for file in files {
-		std::fs::copy(nyble_root.join(file), output.join(file)).expect("Failed to copy file");
+		let doc = Document::from_file(nyble_root.join(file), Options::default()).unwrap();
+		let string = doc.compile();
+		let mut file = File::create(output.join(file)).unwrap();
+		file.write_all(string.as_bytes()).unwrap();
 	}
 
+	// Ahhhh copy the directories ahhh
 	copy_across(nyble_root.join("styles"), output.join("styles"));
 	copy_across(nyble_root.join("media"), output.join("media"));
 
+	// Special notebook handling
 	Notebook::new(
 		nyble_root.join("notebook.html"),
 		nyble_root.join("notebook"),
