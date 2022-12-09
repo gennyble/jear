@@ -5,6 +5,7 @@ version = 3
 [[package]]
 name = "bempline"
 version = "0.9.0"
+source = "git+https://github.com/gennyble/bempline#a9df4184ea7f7c8d86170ef9497022c1f0d42d45"
 
 [[package]]
 name = "camino"
@@ -38,6 +39,7 @@ dependencies = [
 [[package]]
 name = "quark"
 version = "0.1.0"
+source = "git+https://github.com/gennyble/quark#798c352fe48ac1f3c7eb3cda3a774e317c40000c"
 
 [[package]]
 name = "serde"

@@ -6,10 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bempline = { path= "../bempline" }
+bempline = { git = "https://github.com/gennyble/bempline" }
 camino = "1.1.1"
 confindent = "2.2.0"
-quark = { path="../quark" }
+quark = { git = "https://github.com/gennyble/quark" }
 
 [dependencies.time]
 version = "0.3.17"
