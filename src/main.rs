@@ -1,11 +1,53 @@
 mod html;
 mod notebook;
+mod words;
 
-use std::{fs::File, io::Write};
+use std::{fs::File, io::Write, ops::Deref};
 
 use bempline::{Document, Options};
 use camino::{Utf8Path, Utf8PathBuf};
 use notebook::Notebook;
+use words::WordsThing;
+
+const WORDS: &'static str = "words";
+
+pub struct NybleRoot(Utf8PathBuf);
+
+impl Deref for NybleRoot {
+	type Target = Utf8PathBuf;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
+
+impl NybleRoot {
+	pub fn words(&self) -> Utf8PathBuf {
+		self.join(WORDS)
+	}
+}
+
+pub struct Output(Utf8PathBuf);
+
+impl Deref for Output {
+	type Target = Utf8PathBuf;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
+
+impl Output {
+	pub fn words(&self) -> Utf8PathBuf {
+		let path = self.join(WORDS);
+
+		if !path.exists() {
+			std::fs::create_dir(&path).unwrap();
+		}
+
+		path
+	}
+}
 
 fn main() {
 	let nyble_root = match std::env::args().nth(1) {
@@ -13,7 +55,7 @@ fn main() {
 			eprintln!("First argument is nyble-root!");
 			return;
 		}
-		Some(string_root) => Utf8PathBuf::from(string_root),
+		Some(string_root) => NybleRoot(Utf8PathBuf::from(string_root)),
 	};
 
 	let output = match std::env::args().nth(2) {
@@ -21,7 +63,7 @@ fn main() {
 			eprintln!("The second argument is the output!");
 			return;
 		}
-		Some(string_out) => Utf8PathBuf::from(string_out),
+		Some(string_out) => Output(Utf8PathBuf::from(string_out)),
 	};
 
 	// Some bempline that we want to compile
@@ -43,6 +85,9 @@ fn main() {
 		nyble_root.join("notebook"),
 	)
 	.output(output.join("notebook.html"));
+
+	// Special Words handling
+	WordsThing::new(&nyble_root).output(&output);
 }
 
 pub fn copy_across<F: AsRef<Utf8Path>, T: AsRef<Utf8Path>>(from: F, to: T) {

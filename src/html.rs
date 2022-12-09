@@ -1,6 +1,18 @@
 use std::collections::HashMap;
 
+use camino::Utf8Path;
 use quark::{Inline, Link, Parser, Token};
+
+pub fn file_html<P: AsRef<Utf8Path>>(path: P) -> String {
+	let path = path.as_ref();
+	let name = path.file_name().unwrap().to_owned();
+	let file_content =
+		std::fs::read_to_string(path).expect(&format!("Failed to read file at path {path}"));
+
+	let mut qp = Parser::new();
+	qp.parse(file_content);
+	parser_html(qp)
+}
 
 pub fn parser_html(parser: Parser) -> String {
 	tokens_html(parser.tokens(), &parser.references)
@@ -91,7 +103,7 @@ pub fn inlines_html(inlines: &[Inline], refs: &HashMap<String, String>) -> Strin
 }
 
 // This is from turquoise lmfao
-fn htmlspecialchars<S: AsRef<str>>(raw: S) -> String {
+pub fn htmlspecialchars<S: AsRef<str>>(raw: S) -> String {
 	let mut ret = String::new();
 
 	for ch in raw.as_ref().chars() {

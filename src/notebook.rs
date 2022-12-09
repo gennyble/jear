@@ -2,7 +2,6 @@ use std::{fs::File, io::Write};
 
 use bempline::{Document, Options};
 use camino::Utf8Path;
-use quark::Parser;
 
 use crate::html;
 
@@ -54,11 +53,7 @@ impl NotebookPage {
 	pub fn from_file<P: AsRef<Utf8Path>>(path: P) -> Self {
 		let path = path.as_ref();
 		let name = path.file_name().unwrap().to_owned();
-		let file_content = std::fs::read_to_string(path).expect("Failed to read NotebookPage");
-
-		let mut qp = Parser::new();
-		qp.parse(file_content);
-		let content = html::parser_html(qp);
+		let content = html::file_html(path);
 		NotebookPage { name, content }
 	}
 }

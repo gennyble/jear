@@ -8,4 +8,9 @@ edition = "2021"
 [dependencies]
 bempline = { path= "../bempline" }
 camino = "1.1.1"
+confindent = "2.2.0"
 quark = { path="../quark" }
+
+[dependencies.time]
+version = "0.3.17"
+features = ["formatting", "macros", "parsing"]
