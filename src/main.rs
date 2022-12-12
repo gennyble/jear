@@ -88,6 +88,13 @@ fn main() {
 
 	// Special Words handling
 	WordsThing::new(&nyble_root).output(&output);
+
+	copy_across(
+		nyble_root
+			.words()
+			.join("gif-selfies-and-color-quantization"),
+		output.words().join("gif-selfies-and-color-quantization"),
+	)
 }
 
 pub fn copy_across<F: AsRef<Utf8Path>, T: AsRef<Utf8Path>>(from: F, to: T) {
