@@ -67,7 +67,7 @@ fn main() {
 	};
 
 	// Some bempline that we want to compile
-	let files = vec!["about.html", "index.html"];
+	let files = vec!["about.html", "index.html", "things.html"];
 	for file in files {
 		let doc = Document::from_file(nyble_root.join(file), Options::default()).unwrap();
 		let string = doc.compile();
