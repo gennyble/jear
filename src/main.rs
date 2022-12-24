@@ -6,6 +6,7 @@ use std::{fs::File, io::Write, ops::Deref};
 
 use bempline::{Document, Options};
 use camino::{Utf8Path, Utf8PathBuf};
+use confindent::Confindent;
 use notebook::Notebook;
 use words::WordsThing;
 
@@ -50,24 +51,21 @@ impl Output {
 }
 
 fn main() {
-	let nyble_root = match std::env::args().nth(1) {
+	let conf = match std::env::args().nth(1) {
 		None => {
-			eprintln!("First argument is nyble-root!");
+			eprintln!("The first argument must be path to the config");
 			return;
 		}
-		Some(string_root) => NybleRoot(Utf8PathBuf::from(string_root)),
+		Some(string) => Confindent::from_file(string).unwrap(),
 	};
-
-	let output = match std::env::args().nth(2) {
-		None => {
-			eprintln!("The second argument is the output!");
-			return;
-		}
-		Some(string_out) => Output(Utf8PathBuf::from(string_out)),
-	};
+	let JearConfig {
+		nyble_root,
+		output,
+		silly_gifs,
+	} = JearConfig::make(conf).unwrap();
 
 	// Some bempline that we want to compile
-	let files = vec!["about.html", "index.html", "things.html"];
+	let files = vec!["about.html", "index.html", "things.html", "sillygifs.html"];
 	for file in files {
 		let doc = Document::from_file(nyble_root.join(file), Options::default()).unwrap();
 		let string = doc.compile();
@@ -78,6 +76,12 @@ fn main() {
 	// Ahhhh copy the directories ahhh
 	copy_across(nyble_root.join("styles"), output.join("styles"));
 	copy_across(nyble_root.join("media"), output.join("media"));
+
+	// Special SillyGif handling. They're so large that we want to symlink
+	let sillyout = output.join("media").join("sillygifs");
+	if !sillyout.exists() {
+		std::os::unix::fs::symlink(silly_gifs, sillyout).unwrap();
+	}
 
 	// Special notebook handling
 	Notebook::new(
@@ -121,5 +125,45 @@ pub fn copy_across<F: AsRef<Utf8Path>, T: AsRef<Utf8Path>>(from: F, to: T) {
 			eprintln!("What even got here");
 			continue;
 		}
+	}
+}
+
+pub struct JearConfig {
+	nyble_root: NybleRoot,
+	output: Output,
+	silly_gifs: Utf8PathBuf,
+}
+
+impl JearConfig {
+	pub fn make(c: Confindent) -> Result<Self, ()> {
+		let nyble_root = match c.child_value("NybleRoot") {
+			None => {
+				eprintln!("Missing NybleRoot");
+				return Err(());
+			}
+			Some(string_root) => NybleRoot(Utf8PathBuf::from(string_root)),
+		};
+
+		let output = match c.child_value("Output") {
+			None => {
+				eprintln!("Missing Output");
+				return Err(());
+			}
+			Some(string_out) => Output(Utf8PathBuf::from(string_out)),
+		};
+
+		let silly_gifs = match c.child_parse("SillyGifs") {
+			Ok(u) => u,
+			Err(_) => {
+				eprintln!("Missing or malformed SillyGifs");
+				return Err(());
+			}
+		};
+
+		Ok(Self {
+			nyble_root,
+			output,
+			silly_gifs,
+		})
 	}
 }

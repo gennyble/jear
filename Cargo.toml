@@ -10,6 +10,7 @@ bempline = { git = "https://github.com/gennyble/bempline" }
 camino = "1.1.1"
 confindent = "2.2.0"
 quark = { git = "https://github.com/gennyble/quark" }
+thiserror = "1.0.38"
 
 [dependencies.time]
 version = "0.3.17"
