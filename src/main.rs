@@ -128,7 +128,10 @@ pub fn copy_across<F: AsRef<Utf8Path>, T: AsRef<Utf8Path>>(from: F, to: T, hardl
 			if !hardlink {
 				std::fs::copy(entry.path(), to.join(name)).expect("Failed file copy");
 			} else {
-				std::fs::hard_link(entry.path(), to.join(name)).expect("Failed to hardlink file");
+				let fullto = to.join(name);
+				if !fullto.exists() {
+					std::fs::hard_link(entry.path(), fullto).expect("Failed to hardlink file");
+				}
 			}
 		} else if meta.is_dir() {
 			copy_across(entry.path(), to.join(name), hardlink);
