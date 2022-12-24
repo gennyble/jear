@@ -62,7 +62,14 @@ fn main() {
 		nyble_root,
 		output,
 		silly_gifs,
+		silly_gifs_sym,
 	} = JearConfig::make(conf).unwrap();
+
+	println!(
+		"NybleRoot {}\nOutput {}\nSillyGifs {silly_gifs}\n\tSymlink {silly_gifs_sym}",
+		nyble_root.deref(),
+		output.deref()
+	);
 
 	// Some bempline that we want to compile
 	let files = vec!["about.html", "index.html", "things.html", "sillygifs.html"];
@@ -74,13 +81,15 @@ fn main() {
 	}
 
 	// Ahhhh copy the directories ahhh
-	copy_across(nyble_root.join("styles"), output.join("styles"));
-	copy_across(nyble_root.join("media"), output.join("media"));
+	copy_across(nyble_root.join("styles"), output.join("styles"), false);
+	copy_across(nyble_root.join("media"), output.join("media"), false);
 
 	// Special SillyGif handling. They're so large that we want to symlink
 	let sillyout = output.join("media").join("sillygifs");
-	if !sillyout.exists() {
+	if !sillyout.exists() && silly_gifs_sym {
 		std::os::unix::fs::symlink(silly_gifs, sillyout).unwrap();
+	} else if !silly_gifs_sym {
+		copy_across(silly_gifs, sillyout, true);
 	}
 
 	// Special notebook handling
@@ -98,10 +107,11 @@ fn main() {
 			.words()
 			.join("gif-selfies-and-color-quantization"),
 		output.words().join("gif-selfies-and-color-quantization"),
+		false,
 	)
 }
 
-pub fn copy_across<F: AsRef<Utf8Path>, T: AsRef<Utf8Path>>(from: F, to: T) {
+pub fn copy_across<F: AsRef<Utf8Path>, T: AsRef<Utf8Path>>(from: F, to: T, hardlink: bool) {
 	let from = from.as_ref();
 	let to = to.as_ref();
 
@@ -115,9 +125,13 @@ pub fn copy_across<F: AsRef<Utf8Path>, T: AsRef<Utf8Path>>(from: F, to: T) {
 		let meta = entry.metadata().unwrap();
 
 		if meta.is_file() {
-			std::fs::copy(entry.path(), to.join(name)).expect("Failed file copy");
+			if !hardlink {
+				std::fs::copy(entry.path(), to.join(name)).expect("Failed file copy");
+			} else {
+				std::fs::hard_link(entry.path(), to.join(name)).expect("Failed to hardlink file");
+			}
 		} else if meta.is_dir() {
-			copy_across(entry.path(), to.join(name));
+			copy_across(entry.path(), to.join(name), hardlink);
 		} else if meta.is_symlink() {
 			eprintln!("We don't use symlinks; what happened?");
 			continue;
@@ -132,6 +146,10 @@ pub struct JearConfig {
 	nyble_root: NybleRoot,
 	output: Output,
 	silly_gifs: Utf8PathBuf,
+	// Whether or not to use symlinks.
+	// true: use symlinks
+	// false: use hardlinks
+	silly_gifs_sym: bool,
 }
 
 impl JearConfig {
@@ -160,10 +178,24 @@ impl JearConfig {
 			}
 		};
 
+		let silly_gifs_sym = match c.child("SillyGifs").unwrap().child_value("Symlink") {
+			None => {
+				eprintln!("SillyGifs.Symlink is required. true for symlink, false for hardlink");
+				return Err(());
+			}
+			Some(v) if v.to_lowercase() == "false" => false,
+			Some(v) if v.to_lowercase() == "true" => true,
+			Some(un) => {
+				eprintln!("SillyGifs.Symlink value '{un}' is confusing");
+				return Err(());
+			}
+		};
+
 		Ok(Self {
 			nyble_root,
 			output,
 			silly_gifs,
+			silly_gifs_sym,
 		})
 	}
 }
