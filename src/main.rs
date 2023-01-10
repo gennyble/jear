@@ -61,6 +61,7 @@ fn main() {
 	let JearConfig {
 		nyble_root,
 		output,
+		bempline_build,
 		silly_gifs,
 		silly_gifs_sym,
 	} = JearConfig::make(conf).unwrap();
@@ -72,9 +73,8 @@ fn main() {
 	);
 
 	// Some bempline that we want to compile
-	let files = vec!["about.html", "index.html", "things.html", "sillygifs.html"];
-	for file in files {
-		let doc = Document::from_file(nyble_root.join(file), Options::default()).unwrap();
+	for file in bempline_build {
+		let doc = Document::from_file(nyble_root.join(&file), Options::default()).unwrap();
 		let string = doc.compile();
 		let mut file = File::create(output.join(file)).unwrap();
 		file.write_all(string.as_bytes()).unwrap();
@@ -148,6 +148,8 @@ pub fn copy_across<F: AsRef<Utf8Path>, T: AsRef<Utf8Path>>(from: F, to: T, hardl
 pub struct JearConfig {
 	nyble_root: NybleRoot,
 	output: Output,
+	/// Just files that need to be run through bempline so they can be compiled
+	bempline_build: Vec<Utf8PathBuf>,
 	silly_gifs: Utf8PathBuf,
 	// Whether or not to use symlinks.
 	// true: use symlinks
@@ -173,6 +175,12 @@ impl JearConfig {
 			Some(string_out) => Output(Utf8PathBuf::from(string_out)),
 		};
 
+		let bempline_build = c
+			.children("Build")
+			.into_iter()
+			.map(|child| Utf8PathBuf::from(child.value().unwrap()))
+			.collect();
+
 		let silly_gifs = match c.child_parse("SillyGifs") {
 			Ok(u) => u,
 			Err(_) => {
@@ -197,6 +205,7 @@ impl JearConfig {
 		Ok(Self {
 			nyble_root,
 			output,
+			bempline_build,
 			silly_gifs,
 			silly_gifs_sym,
 		})
