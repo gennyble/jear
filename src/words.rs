@@ -42,6 +42,10 @@ impl WordsThing {
 	}
 
 	pub fn output(mut self, output: &Output) {
+		// We want to do these in reverse so they appear newest-first in the list
+		self.all_the_words
+			.sort_by(|a, b| a.date.cmp(&b.date).reverse());
+
 		for word in self.all_the_words {
 			let page_title = format!("{} | nyble.dev", word.title);
 
