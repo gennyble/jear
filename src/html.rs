@@ -39,7 +39,11 @@ where
 				ret.push_str(&format!("<p>{}</p>", inlines_html(&inner, refs)));
 			}
 			Token::CodeBlock { lang, code } => {
-				ret.push_str(&format!("<pre><code>{code}</pre></code>"));
+				if lang == "embeded-html" {
+					ret.push_str(code);
+				} else {
+					ret.push_str(&format!("<pre><code>{code}</pre></code>"));
+				}
 			}
 		}
 	}
