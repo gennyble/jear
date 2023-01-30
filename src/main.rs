@@ -62,6 +62,8 @@ fn main() {
 		nyble_root,
 		output,
 		bempline_build,
+		copy,
+		symlink,
 		silly_gifs,
 		silly_gifs_sym,
 	} = JearConfig::make(conf).unwrap();
@@ -80,9 +82,13 @@ fn main() {
 		file.write_all(string.as_bytes()).unwrap();
 	}
 
-	// Ahhhh copy the directories ahhh
-	copy_across(nyble_root.join("styles"), output.join("styles"), false);
-	copy_across(nyble_root.join("media"), output.join("media"), false);
+	for path in copy {
+		copy_across(nyble_root.join(&path), output.join(&path), false);
+	}
+
+	for path in symlink {
+		std::os::unix::fs::symlink(nyble_root.join(&path), output.join(&path)).unwrap();
+	}
 
 	// Special SillyGif handling. They're so large that we want to symlink
 	let sillyout = output.join("media").join("sillygifs");
@@ -150,6 +156,8 @@ pub struct JearConfig {
 	output: Output,
 	/// Just files that need to be run through bempline so they can be compiled
 	bempline_build: Vec<Utf8PathBuf>,
+	copy: Vec<Utf8PathBuf>,
+	symlink: Vec<Utf8PathBuf>,
 	silly_gifs: Utf8PathBuf,
 	// Whether or not to use symlinks.
 	// true: use symlinks
@@ -181,6 +189,18 @@ impl JearConfig {
 			.map(|child| Utf8PathBuf::from(child.value().unwrap()))
 			.collect();
 
+		let copy = c
+			.children("Copy")
+			.into_iter()
+			.map(|child| Utf8PathBuf::from(child.value().unwrap()))
+			.collect();
+
+		let symlink = c
+			.children("Symlink")
+			.into_iter()
+			.map(|child| Utf8PathBuf::from(child.value().unwrap()))
+			.collect();
+
 		let silly_gifs = match c.child_parse("SillyGifs") {
 			Ok(u) => u,
 			Err(_) => {
@@ -206,6 +226,8 @@ impl JearConfig {
 			nyble_root,
 			output,
 			bempline_build,
+			copy,
+			symlink,
 			silly_gifs,
 			silly_gifs_sym,
 		})
